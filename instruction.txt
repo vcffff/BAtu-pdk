@@ -1,0 +1,149 @@
+# Task: generate a Packet Tracer lab as a real .pkt (NAT-PT, IPv6 islands over an IPv4 core)
+
+## Context: this repository
+This repo (packet-tracer-pkt-format) reverse-engineers the .pkt container and ships a Python authoring API, `pkt_core.builder.Lab`. It writes devices, cabling, IOS config (as RUNNINGCONFIG lines) and PC IPs straight to a file Packet Tracer opens, without Packet Tracer installed. Use it. Do NOT use PTBuilder/JavaScript and do NOT hand-roll the encryption.
+
+## Read first, before writing any code
+1. `SKILL.md` (the packaged agent skill). Obey all of its rules. Rules 7 and 8 (cables, and port names that make PT refuse the whole file with a generic "not compatible" error) are critical.
+2. `docs/CONFIGURATION.md`, `docs/CAPABILITIES.md`, `BUILDER_PORT.md`, `docs/SCENE_GRAPH.md`.
+3. `demo/build_demo.py` (worked example) and `tools/lab_api.py` / `src/pkt_core/builder` for the real signatures. Use the actual API, not the README snippet from memory. If this checkout differs from the README, the code wins.
+Install in editable mode or `pip install packet-tracer-pkt-format` (Python 3.10+).
+
+## Hard constraints
+- Do not claim the file was opened or tested in Packet Tracer. You cannot run it. Verification is limited to what the repo tooling can check (see "Verification"). At the end, list what you are unsure about.
+- Verified by the user in real PT: ISR4331 accepts `ipv6 nat ?` (prefix, v4v6, v6v4) and REJECTS `nat64`. Use NAT-PT only. No `nat64` command anywhere.
+- Interface names: ISR4331 = GigabitEthernet0/0/0, 0/0/1, 0/0/2. Cisco 2911 = GigabitEthernet0/0, 0/1, 0/2. Switch 2960-24TT = FastEthernet0/1.. . End devices use FastEthernet0.
+- Every port used in a link must exist on that exact device instance in the template/model you add. Check this programmatically before saving. Do not guess port names. If a model is not in the bundled template library, stop and report it. Do not substitute silently.
+- Do not set console, enable or VTY passwords in any config.
+- Do not use `tools/make_scored_lab.py` or the .pka/scoring tooling. This is a plain .pkt, not an activity.
+- Do not use the "answer key / assessment" parts of this repo for anything. Not relevant here.
+
+## Deliverables (create in ./pt_lab/)
+1. `build_lab.py`: builds the lab with `pkt_core.builder.Lab` and writes `NAT64_lab.pkt` (output path as a CLI arg, default `./pt_lab/NAT64_lab.pkt`). Steps: `Lab()`, `prune_seed_devices()`, `add_device(...)` for every device at the coordinates below, `link(...)` for every link, IOS config for each router read from `configs/<DEVICE>.txt`, IPv4 settings for IPv4 hosts via `pc_ip=(ip, mask, gateway)` (add DNS only if the API supports it). Prefer the API's own cable handling (auto cable type); if you must pick explicitly, use straight-through for router/switch and switch/host, crossover for router-to-router.
+2. `configs/<DEVICE>.txt`: one plain paste-ready CLI file per router (NAT1, NAT2, NAT3, C1, C2, C3, C4), starting with `enable` and `configure terminal` and ending with `end` and `write memory`. No leading indentation. These are the single source of truth: `build_lab.py` loads them (check how the builder wants config lines: with or without `enable`/`configure terminal`/`write memory`, and with indentation or not, and strip or adapt accordingly while keeping the .txt files paste-ready).
+3. `verify_lab.py`: re-opens the generated .pkt and runs the checks in "Verification".
+4. `README.md`: how to build (`pip install`, run `build_lab.py`), how to open in PT, the manual steps, the test plan, and the uncertainties list.
+
+## Devices and layout (x, y for add_device)
+| Device | Model | x | y |
+|---|---|---|---|
+| C1 | 2911 | 350 | 150 |
+| C2 | 2911 | 350 | 450 |
+| C3 | 2911 | 650 | 450 |
+| C4 | 2911 | 650 | 150 |
+| NAT1 | ISR4331 | 200 | 150 |
+| NAT2 | ISR4331 | 200 | 450 |
+| NAT3 | ISR4331 | 800 | 450 |
+| SW1 | 2960-24TT | 100 | 150 |
+| SW2 | 2960-24TT | 100 | 450 |
+| SW3 | 2960-24TT | 900 | 450 |
+| SW-Srv | 2960-24TT | 800 | 150 |
+| PC1 / Laptop1 | PC-PT / Laptop-PT | 40 / 40 | 90 / 210 |
+| PC2 / Laptop2 | PC-PT / Laptop-PT | 40 / 40 | 390 / 510 |
+| PC3 / Laptop3 | PC-PT / Laptop-PT | 960 / 960 | 390 / 510 |
+| Server-Web | Server-PT | 900 | 90 |
+| Server-DNS | Server-PT | 900 | 150 |
+| PC-Legacy | PC-PT | 900 | 210 |
+
+Model strings are the builder's template keys. Confirm each against the bundled library (`tools/device_templates.json` / resources) and report any mismatch. Check that the canvas coordinates behave sensibly in the builder's coordinate system.
+
+## Links (device:port <-> device:port)
+Island LANs:
+- NAT1 Gi0/0/0 <-> SW1 Fa0/1; SW1 Fa0/2 <-> PC1 FastEthernet0; SW1 Fa0/3 <-> Laptop1 FastEthernet0
+- NAT2 Gi0/0/0 <-> SW2 Fa0/1; SW2 Fa0/2 <-> PC2; SW2 Fa0/3 <-> Laptop2
+- NAT3 Gi0/0/0 <-> SW3 Fa0/1; SW3 Fa0/2 <-> PC3; SW3 Fa0/3 <-> Laptop3
+NAT to core:
+- NAT1 Gi0/0/1 <-> C1 Gi0/0
+- NAT2 Gi0/0/1 <-> C2 Gi0/0
+- NAT3 Gi0/0/1 <-> C3 Gi0/0
+Core ring:
+- C1 Gi0/1 <-> C2 Gi0/1
+- C2 Gi0/2 <-> C3 Gi0/1
+- C3 Gi0/2 <-> C4 Gi0/0
+- C4 Gi0/1 <-> C1 Gi0/2
+Server side:
+- C4 Gi0/2 <-> SW-Srv Fa0/1; SW-Srv Fa0/2 <-> Server-Web; SW-Srv Fa0/3 <-> Server-DNS; SW-Srv Fa0/4 <-> PC-Legacy
+
+(Server-PT and PC-PT use FastEthernet0. Confirm each end device's real port name in its template.)
+
+## Addressing
+IPv6 islands: island N = 2001:db8:N::/64. NATN Gi0/0/0 = 2001:db8:N::1. Hosts: PCN = ::10, LaptopN = ::11, gateway 2001:db8:N::1.
+NAT-PT IPv6 prefix on all NAT routers: 2001:db8:64::/96.
+Point-to-point IPv4 /30 links:
+- NATN <-> CN: 10.0.N.0/30 (CN = .1, NATN Gi0/0/1 = .2)
+- C1 Gi0/1 = 10.0.12.1, C2 Gi0/1 = 10.0.12.2
+- C2 Gi0/2 = 10.0.23.1, C3 Gi0/1 = 10.0.23.2
+- C3 Gi0/2 = 10.0.34.1, C4 Gi0/0 = 10.0.34.2
+- C4 Gi0/1 = 10.0.41.1, C1 Gi0/2 = 10.0.41.2
+Server LAN 192.0.2.0/24: C4 Gi0/2 = 192.0.2.1; Server-Web 192.0.2.10; Server-DNS 192.0.2.53; PC-Legacy 192.0.2.20; gateway 192.0.2.1 for all.
+NAT-PT pools: NAT1 198.51.100.1-198.51.100.14, NAT2 198.51.100.17-198.51.100.30, NAT3 198.51.100.33-198.51.100.46 (all /28).
+Tunnel subnets: 2001:db8:12::/64, 2001:db8:13::/64, 2001:db8:23::/64.
+
+## NAT router template (NAT1, NAT2, NAT3; replace {N}, {POOL_START}, {POOL_END})
+```
+enable
+configure terminal
+hostname NAT{N}
+ipv6 unicast-routing
+interface GigabitEthernet0/0/0
+ipv6 address 2001:db8:{N}::1/64
+ipv6 enable
+ipv6 nat
+no shutdown
+exit
+interface GigabitEthernet0/0/1
+ip address 10.0.{N}.2 255.255.255.252
+ipv6 nat
+no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 10.0.{N}.1
+ipv6 access-list V6HOSTS
+permit ipv6 2001:db8:{N}::/64 any
+exit
+ipv6 nat prefix 2001:db8:64::/96
+ipv6 nat v6v4 pool P{N} {POOL_START} {POOL_END} prefix-length 28
+ipv6 nat v6v4 source list V6HOSTS pool P{N}
+```
+Then append the tunnel block (tunnel interfaces must NOT have `ipv6 nat`):
+- NAT1: Tunnel12 (ipv6 2001:db8:12::1/64, source 10.0.1.2, destination 10.0.2.2, mode ipv6ip), Tunnel13 (2001:db8:13::1/64, source 10.0.1.2, destination 10.0.3.2); `ipv6 route 2001:db8:2::/64 2001:db8:12::2`; `ipv6 route 2001:db8:3::/64 2001:db8:13::2`
+- NAT2: Tunnel12 (2001:db8:12::2/64, source 10.0.2.2, destination 10.0.1.2), Tunnel23 (2001:db8:23::1/64, source 10.0.2.2, destination 10.0.3.2); `ipv6 route 2001:db8:1::/64 2001:db8:12::1`; `ipv6 route 2001:db8:3::/64 2001:db8:23::2`
+- NAT3: Tunnel13 (2001:db8:13::2/64, source 10.0.3.2, destination 10.0.1.2), Tunnel23 (2001:db8:23::2/64, source 10.0.3.2, destination 10.0.2.2); `ipv6 route 2001:db8:1::/64 2001:db8:13::1`; `ipv6 route 2001:db8:2::/64 2001:db8:23::1`
+Keep the tunnel config in a separate, clearly marked section of each config file, and make `build_lab.py` able to omit it (`--no-tunnels`), because `tunnel mode ipv6ip` may be rejected by some PT versions (alternatives to document: `tunnel mode gre ipv6`, `tunnel mode gre ip`).
+
+## Core router configs
+All core routers: `no shutdown` on every used interface, then OSPF.
+- C1: Gi0/0 10.0.1.1/30, Gi0/1 10.0.12.1/30, Gi0/2 10.0.41.2/30; `ip route 198.51.100.0 255.255.255.240 10.0.1.2`; `router ospf 1`, `network 10.0.0.0 0.255.255.255 area 0`, `redistribute static subnets`
+- C2: Gi0/0 10.0.2.1/30, Gi0/1 10.0.12.2/30, Gi0/2 10.0.23.1/30; `ip route 198.51.100.16 255.255.255.240 10.0.2.2`; same OSPF as C1
+- C3: Gi0/0 10.0.3.1/30, Gi0/1 10.0.23.2/30, Gi0/2 10.0.34.1/30; `ip route 198.51.100.32 255.255.255.240 10.0.3.2`; same OSPF as C1
+- C4: Gi0/0 10.0.34.2/30, Gi0/1 10.0.41.1/30, Gi0/2 192.0.2.1/24; `router ospf 1` with `network 10.0.0.0 0.255.255.255 area 0`, `network 192.0.2.0 0.0.0.255 area 0`, `passive-interface GigabitEthernet0/2`
+
+## Verification (what you CAN check offline; run it and report real output)
+In `verify_lab.py`, using `pkt_core`:
+1. `pkt info` on the output: container decodes, root tag `PACKETTRACER5`.
+2. Round trip: `encode(decode(f)) == f` byte-exact.
+3. Load with `Lab.from_bytes(decode(f).xml)`: expect 17+4... count the devices (7 routers + 4 switches + 6 hosts + 3 servers/legacy = 20 total; recompute from the tables) and 25 links; print any mismatch.
+4. For every link: both ports exist on their device, no port used twice, link endpoints match the Links table exactly.
+5. Each router's stored running config contains the expected key lines (hostname, `ipv6 nat v6v4`, tunnel block present/absent, OSPF).
+6. `pkt unpack` to a temp dir and confirm per-device IOS configs match `configs/*.txt` after normalisation.
+7. `pkt audit` on the file. Report the result. Template leftovers (stale hostnames, phantom IPs, duplicated DHCP pools or AAA clients inherited from harvested templates) must be cleaned if audit flags them.
+8. Check that no device still carries a template's factory/stale config and that device names are unique.
+State plainly that passing these does NOT prove Packet Tracer will open the file or accept every command.
+
+## Things the builder likely cannot do (confirm in CAPABILITIES.md; list in README.md as manual steps)
+- IPv6 addresses on the six IPv6 hosts (Desktop > IP Configuration > IPv6). Leave their IPv4 empty. If the builder cannot leave IPv4 empty, say so. Set `pc_ip` only on Server-Web, Server-DNS, PC-Legacy.
+- Server-Web: turn on HTTP and edit the index page. Server-DNS: optional static AAAA record (www.example.test -> 2001:db8:64::c000:20a), a manual stand-in for DNS64; state clearly in the README that it is NOT real DNS64 and that DNS-server AAAA support is untested.
+- Optional: coloured rectangles/notes labelling "IPv6 island 1/2/3", "NAT-PT routers", "IPv4 core", "IPv4 servers/legacy". Only add them via the builder if it supports it; otherwise list as manual.
+
+## Test plan to put in README.md (with expected results)
+1. `show ip interface brief` on every router; `show ip ospf neighbor` on C1-C4; `show ip route ospf` on C4 must list 198.51.100.0/28, .16/28, .32/28.
+2. PC-Legacy ping 192.0.2.10 (baseline).
+3. PC1, PC2, PC3 each ping 2001:db8:64::c000:20a (Server-Web via NAT-PT); browser to http://[2001:db8:64::c000:20a].
+4. PC1 ping PC2 (2001:db8:2::10) and PC3 (2001:db8:3::10) through the tunnels.
+5. `show ipv6 nat translations` and `show ipv6 nat statistics` on the NAT router used.
+6. Shut C1 Gi0/1; check traffic still flows via the ring (C1-C4-C3-C2).
+7. Packet Tracer Simulation mode: follow an ICMP packet from PC1 and show the header change at NAT1.
+
+## README.md must also include
+- How to build and open: `pip install packet-tracer-pkt-format`, `python pt_lab/build_lab.py`, `python pt_lab/verify_lab.py`, then open the .pkt in PT and File > Save As the final name.
+- Fallback if PT refuses the file ("not compatible with this version"): run with a minimal topology (devices only, then add links, then configs) to bisect, and check port names first (SKILL.md rule 8).
+- "Known uncertainties": exact `pkt_core.builder` signatures and how it handles IOS config lines (are `ipv6 nat`, `tunnel mode ipv6ip` and `ipv6 access-list` accepted from a RUNNINGCONFIG on load, or only when typed?); whether ISR4331 and Laptop-PT/Server-PT are in the bundled template library; IPv6 host config not settable; `ipv6 nat v6v4 pool ... prefix-length 28` syntax; tunnel mode support; NAT-PT behaviour with tunnels; AAAA record support; PT version the seed document targets vs the user's version.

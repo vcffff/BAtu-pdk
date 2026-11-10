@@ -1,0 +1,95 @@
+model/ports: C1 2911: 3 copper ports (template-factory)
+model/ports: C2 2911: 3 copper ports (template-factory)
+model/ports: C3 2911: 3 copper ports (template-factory)
+model/ports: C4 2911: 3 copper ports (template-factory)
+model/ports: NAT1 ISR4331: 3 copper ports (template-factory)
+model/ports: NAT2 ISR4331: 3 copper ports (template-factory)
+model/ports: NAT3 ISR4331: 3 copper ports (template-factory)
+model/ports: SW1 2960-24TT: 26 copper ports (template-factory)
+model/ports: SW2 2960-24TT: 26 copper ports (template-factory)
+model/ports: SW3 2960-24TT: 26 copper ports (template-factory)
+model/ports: SW-Srv 2960-24TT: 26 copper ports (template-factory)
+model/ports: PC1 PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Laptop1 Laptop-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: PC2 PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Laptop2 Laptop-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: PC3 PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Laptop3 Laptop-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Server-Web Server-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Server-DNS Server-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: PC-Legacy PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+Saved C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\rebuilt.pkt: 20 distinct devices, 20 distinct links; stage=full; tunnels=True
+Not opened or tested in Packet Tracer. Run verify_lab.py next.
+PASS: independent rebuild is byte-identical to delivered .pkt
+model/ports: C1 2911: 3 copper ports (template-factory)
+model/ports: C2 2911: 3 copper ports (template-factory)
+model/ports: C3 2911: 3 copper ports (template-factory)
+model/ports: C4 2911: 3 copper ports (template-factory)
+model/ports: NAT1 ISR4331: 3 copper ports (template-factory)
+model/ports: NAT2 ISR4331: 3 copper ports (template-factory)
+model/ports: NAT3 ISR4331: 3 copper ports (template-factory)
+model/ports: SW1 2960-24TT: 26 copper ports (template-factory)
+model/ports: SW2 2960-24TT: 26 copper ports (template-factory)
+model/ports: SW3 2960-24TT: 26 copper ports (template-factory)
+model/ports: SW-Srv 2960-24TT: 26 copper ports (template-factory)
+model/ports: PC1 PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Laptop1 Laptop-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: PC2 PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Laptop2 Laptop-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: PC3 PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Laptop3 Laptop-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Server-Web Server-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: Server-DNS Server-PT: 1 copper ports (convention+installed-module+user-confirmed)
+model/ports: PC-Legacy PC-PT: 1 copper ports (convention+installed-module+user-confirmed)
+Saved C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\no_tunnels.pkt: 20 distinct devices, 20 distinct links; stage=full; tunnels=False
+Not opened or tested in Packet Tracer. Run verify_lab.py next.
+
+$ pkt info C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\no_tunnels.pkt
+file        : C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\no_tunnels.pkt
+size        : 85,606 bytes
+format      : pkt
+cipher      : twofish
+key byte    : 0x89  (repeated x16)
+iv byte     : 0x10  (repeated x16)
+root tag    : PACKETTRACER5
+kind        : network lab (.pkt)
+xml bytes   : 1,250,081
+PASS: root PACKETTRACER5; byte-exact encode(decode(file)) == file
+Typed model: 20 devices, 20 links; PT seed version 9.0.1.0858
+Specification correction: links table = 9 island + 3 uplink + 4 ring + 4 server = 20, not 25.
+PASS: 20 distinct names/models/positions; 20 distinct exact cables; 40 unique powered endpoints
+PASS: authored running/startup configs, NAT-PT/OSPF/tunnels, blank IPv6-host IPv4, static IPv4 hosts, unique MACs and physical leaves
+
+$ pkt unpack C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\no_tunnels.pkt -o C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-unpack-6ziicenk
+xml      -> C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-unpack-6ziicenk\no_tunnels.xml  (1,250,081 bytes)
+meta     -> C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-unpack-6ziicenk\no_tunnels.container.json
+configs  -> C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-unpack-6ziicenk\configs/  (11 device configs)
+topology -> C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-unpack-6ziicenk\topology.dot, C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-unpack-6ziicenk\topology.json
+kind     : network lab
+network  : 20 devices, 20 links
+PASS: all 7 unpacked router configs match paste-ready sources after EXEC/exit/indent/comment normalization
+
+$ pkt audit C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\no_tunnels.pkt --templates C:\Users\Magzhan\Downloads\BAtu\packet-tracer-pkt-format\src\pkt_core\data\device_templates.json
+device_names: 20 raw, 20 distinct
+end_device_ips: 3 raw, 3 distinct
+config lines  : min=17 median=19 max=22 total=212 (11 IOS/ASA devices, by model); 212 <LINE> elements in 11 RUNNINGCONFIG blocks
+services      : 0 DNS records (0 distinct x 1 servers)
+RESULT: PASSED (0 failures, 0 warnings)
+SHA256: be66f1c50f528e12ab077884b6dbf1c7606e5beb77eee86f594e2863e5940aaa
+OFFLINE VERIFICATION PASSED. Not opened/tested in Packet Tracer; IOS acceptance and traffic remain unverified.
+PASS: --no-tunnels build and full offline verification
+
+$ pkt info C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\bad_port.pkt
+file        : C:\Users\Magzhan\AppData\Local\Temp\opencode\pkt-variants-mw8xi967\bad_port.pkt
+size        : 85,844 bytes
+format      : pkt
+cipher      : twofish
+key byte    : 0x89  (repeated x16)
+iv byte     : 0x10  (repeated x16)
+root tag    : PACKETTRACER5
+kind        : network lab (.pkt)
+xml bytes   : 1,254,081
+PASS: root PACKETTRACER5; byte-exact encode(decode(file)) == file
+Typed model: 20 devices, 20 links; PT seed version 9.0.1.0858
+Specification correction: links table = 9 island + 3 uplink + 4 ring + 4 server = 20, not 25.
+PASS: verifier rejects sabotaged endpoint: Port missing on actual instance: NAT1:GigabitEthernet9/9/9

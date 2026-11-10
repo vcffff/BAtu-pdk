@@ -1,0 +1,22 @@
+enable
+configure terminal
+hostname C4
+interface GigabitEthernet0/0
+ip address 10.0.34.2 255.255.255.252
+no shutdown
+exit
+interface GigabitEthernet0/1
+ip address 10.0.41.1 255.255.255.252
+no shutdown
+exit
+interface GigabitEthernet0/2
+ip address 192.0.2.1 255.255.255.0
+no shutdown
+exit
+router ospf 1
+network 10.0.0.0 0.255.255.255 area 0
+network 192.0.2.0 0.0.0.255 area 0
+passive-interface GigabitEthernet0/2
+exit
+end
+write memory

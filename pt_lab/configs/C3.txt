@@ -1,0 +1,22 @@
+enable
+configure terminal
+hostname C3
+interface GigabitEthernet0/0
+ip address 10.0.3.1 255.255.255.252
+no shutdown
+exit
+interface GigabitEthernet0/1
+ip address 10.0.23.2 255.255.255.252
+no shutdown
+exit
+interface GigabitEthernet0/2
+ip address 10.0.34.1 255.255.255.252
+no shutdown
+exit
+ip route 198.51.100.32 255.255.255.240 10.0.3.2
+router ospf 1
+network 10.0.0.0 0.255.255.255 area 0
+redistribute static subnets
+exit
+end
+write memory

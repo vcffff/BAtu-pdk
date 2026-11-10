@@ -1,0 +1,67 @@
+$ C:\Users\Magzhan\AppData\Local\Programs\Python\Python312\python.exe packet-tracer-pkt-format/tools/audit_links.py pt_lab/NAT64_lab.pkt
+lab     : NAT64_lab.pkt
+links   : 20
+findings: none
+EXIT CODE: 0
+
+$ C:\Users\Magzhan\AppData\Local\Programs\Python\Python312\python.exe packet-tracer-pkt-format/tools/finalise_lab.py pt_lab/NAT64_lab.pkt --templates packet-tracer-pkt-format/tools/device_templates.json --no-repack --dry-run
+== pt_lab\NAT64_lab.pkt
+  in    pairs<=40/<80/<=120=0/2/18  label-overlaps=11  off-page=0  coincident=0  nn(min/p25/med)=60.0/92.4/120.0  bbox=X[40..960] Y[90..510]
+  layout: skipped (--no-repack)
+  sanitize: {}
+  out   pairs<=40/<80/<=120=0/2/18  label-overlaps=11  off-page=0  coincident=0  nn(min/p25/med)=60.0/92.4/120.0  bbox=X[40..960] Y[90..510]
+  audit : PASSED  device_names=20/20, end_device_ips=3/3
+  round-trip: byte-exact
+  dry-run: nothing written
+EXIT CODE: 1
+
+$ C:\Users\Magzhan\AppData\Local\Programs\Python\Python312\python.exe packet-tracer-pkt-format/tools/check_layout.py pt_lab/NAT64_lab.pkt
+== NAT64_lab.pkt: 20 devices ==
+  bbox (centres)        : X [40 .. 960]  Y [90 .. 510]
+  bbox (label-inclusive): X [-14 .. 1014]  Y [34 .. 563]
+  nearest neighbour     : min 60.0  p25 92.4  median 120.0
+  pairs <= 40 / < 80 / <= 120: 0 / 2 / 18
+  label box overlaps    : 11  (plus 3 exactly touching)
+  off-page devices      : 0 (centre outside page)  2 (label box clips page edge)
+  coincident pairs      : 0
+  -- pairs under the 80-unit floor --
+     Server-Web               Server-DNS               d=60.0  (900,90)-(900,150)
+     Server-DNS               PC-Legacy                d=60.0  (900,150)-(900,210)
+  -- label-inclusive box overlaps --
+     SW1                      PC1                      d=84.9
+     SW1                      Laptop1                  d=84.9
+     SW2                      PC2                      d=84.9
+     SW2                      Laptop2                  d=84.9
+     SW3                      PC3                      d=84.9
+     SW3                      Laptop3                  d=84.9
+     SW-Srv                   Server-Web               d=116.6
+     SW-Srv                   Server-DNS               d=100.0
+     SW-Srv                   PC-Legacy                d=116.6
+     Server-Web               Server-DNS               d=60.0
+     Server-DNS               PC-Legacy                d=60.0
+  result: VIOLATIONS
+EXIT CODE: 1
+
+$ C:\Users\Magzhan\AppData\Local\Programs\Python\Python312\python.exe packet-tracer-pkt-format/tools/check_readability.py pt_lab/NAT64_lab.pkt
+lab       : NAT64_lab.pkt
+devices   : 20   cables: 20   bands: 2
+cabling   : 18 intra-band, 2 inter-band
+crossings : 0  (0.0 per cable)
+length    : min 84.9  median 116.6  p95 300.0  max 300.0  mean 147.1
+
+-- per band: cables and mean cable length --
+   band   0  cables   20   mean length   150.3
+   band   1  cables   20   mean length   143.9
+
+-- longest ten cables --
+     300.0  C4  <->  C1
+     300.0  C3  <->  C4
+     300.0  C2  <->  C3
+     300.0  C1  <->  C2
+     150.0  NAT3  <->  C3
+     150.0  NAT2  <->  C2
+     150.0  NAT1  <->  C1
+     150.0  C4  <->  SW-Srv
+     116.6  SW-Srv  <->  Server-Web
+     116.6  SW-Srv  <->  PC-Legacy
+EXIT CODE: 0
